@@ -1,0 +1,112 @@
+#include <Keypad.h>
+
+ int velocity = 100;//velocidad de las notas
+ 
+ int noteON = 144;//144 = 10010000 in binary, note on command
+ int noteOFF = 128;//128 = 10000000 in binary, note off command
+ 
+int note_Do4 = 0x3C;
+int note_Re4 = 0x3E;
+int note_Mi4 = 0x40;
+int note_Fa4 = 0x41;
+int note_Sol4 = 0x43;
+int note_La4 = 0x45;
+int note_Si4 = 0x47;
+int note_Do5 = 0x48;
+int note_Re5 = 0x4A;
+int note_Mi5 = 0x4C;
+int note_Fa5 = 0x4D;
+int note_Sol5 = 0x4F;
+int note_La5 = 0x51;
+int note_Si5 = 0x53;
+int note_Do6 = 0x54;
+int note_Re6 = 0x56;
+int note_Mi6 = 0x58;
+int note_Fa6 = 0x59;
+int note_Sol6 = 0x5B;
+int note_La6 = 0x5D;
+int note_Si6 = 0x5F;
+
+const byte ROWS = 7; //four rows
+const byte COLS = 3; //three columns
+int keys[ROWS][COLS] = {
+{note_Do4, note_Do5, note_Do6},
+{note_Re4, note_Re5, note_Re6},
+{note_Mi4, note_Mi5, note_Mi5},
+{note_Fa4, note_Fa5, note_Fa5},
+{note_Sol4, note_Sol5, note_Sol5},
+{note_La4, note_La5, note_La5},
+{note_Si4, note_Si5, note_Si5}
+};
+byte rowPins[ROWS] = {2, 3, 4, 5, 6, 7, 8}; //connect to the row pinouts of the kpd
+byte colPins[COLS] = {A2, A3, A4}; //connect to the column pinouts of the kpd
+
+Keypad kpd = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+
+unsigned long loopCount;
+unsigned long startTime;
+String msg;
+
+
+void setup() {
+    Serial.begin(9600);
+    loopCount = 0;
+    startTime = millis();
+    msg = "";
+}
+
+void MIDImessage(int command, int Key, int MIDIvelocity) {
+  Serial.write(command);//send note on or note off command 
+  Serial.write(Key);//send pitch data
+  Serial.write(MIDIvelocity);//send velocity data
+}
+
+void loop() {
+  
+    /*loopCount++;
+    if ( (millis()-startTime)>5000 ) {
+        Serial.print("Average loops per second = ");
+        Serial.println(loopCount/5);
+        startTime = millis();
+        loopCount = 0;
+    }*/
+
+    // Fills kpd.key[ ] array with up-to 10 active keys.
+    // Returns true if there are ANY active keys.
+    if (kpd.getKeys())
+    {
+        for (int i=0; i<LIST_MAX; i++)   // Scan the whole key list.
+        {
+            if ( kpd.key[i].stateChanged )   // Only find keys that have changed state.
+            {
+                switch (kpd.key[i].kstate) {  // Report active key state : IDLE, PRESSED, HOLD, or RELEASED
+                    case PRESSED:
+                    msg = " PRESSED.";
+                   //MIDImessage (noteON, (kpd.key[i].kchar), velocity);
+                   MIDImessage (noteON,key,velocity);
+                    
+                    
+                     //Serial.print("Key ");
+                //Serial.println(kpd.key[i].kchar);
+                break;
+                
+                
+                   /* case HOLD:
+                    msg = " HOLD.";
+                break;
+                */
+                    case RELEASED:
+                    msg = " RELEASED.";
+                    case IDLE:
+                   // MIDImessage (noteOFF, (kpd.key[i].kchar) , velocity);
+                    MIDImessage (noteOFF, key , velocity);
+                    break;
+                }
+                
+                //Serial.print("Key ");
+                //Serial.println(kpd.key[i].kchar);
+               // Serial.println(msg);
+            }
+        }
+    }
+}  // End loop
